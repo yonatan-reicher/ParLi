@@ -5,7 +5,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Library.fs" />
+    <Compile Include="ParLi.fs" />
+    <Compile Include="Parser.fs" />
+    <Compile Include="MaybeParser.fs" />
   </ItemGroup>
 
 </Project>
