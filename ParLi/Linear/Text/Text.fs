@@ -29,12 +29,19 @@ let inline char (ch: char): MaybeParser<char, string Input, 'S> =
             None, input, state)
 
 
-let inline stringReturn str value = 
-    string str >>. ret value
+let inline stringReturn str value = string str >>. ret value
 
-let inline charReturn ch value =
-    char ch >>. ret value
+let inline charReturn ch value = char ch >>. ret value
 
 let inline stringSkip str = stringReturn str ()
 
 let inline charSkip str = stringReturn str ()
+
+
+let inline newline<'S> : MaybeParser<string, string Input, 'S> =
+    choice [ string "\r\n"
+             string "\n"
+             string "\r" ]
+
+let inline eof<'S> : MaybeParser<unit, string Input, 'S> =
+    parser (fun (input, state) -> Input.``|EOF|_|`` input, input, state)
