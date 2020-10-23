@@ -85,7 +85,7 @@ let inline tuple4 x y z w: MaybeParser<'x * 'y * 'z * 'w, 'T, 'S> =
 
 let inline orElse (MaybeParser firstParse)
                   (MaybeParser secondParse)
-                  : MaybeParser<'a * 'b, 'T, 'S> =
+                  : MaybeParser<'a, 'T, 'S> =
     fun (input, state) ->
         match firstParse (input, state) with
         | None, _, newState -> secondParse (input, newState)
