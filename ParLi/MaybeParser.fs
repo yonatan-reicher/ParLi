@@ -118,3 +118,10 @@ let inline many (MaybeParser p): Parser<'a list, 'T, 'S> =
                 input <- nextInput
                 state <- nextState
         Option.get result, input, state)
+
+//  =========================
+//       The Or Parser
+//  =========================
+
+let inline choose (choosing: 'a -> 'b option) parser: MaybeParser<'b, 'T, 'S> =
+    parser >>= (choosing >> Parser.ret)
