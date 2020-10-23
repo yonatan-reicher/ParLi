@@ -12,6 +12,7 @@ let parser (func: 'input * 'state -> 'a option * 'input * 'state)
     func
     
 let inline ofParser parser: MaybeParser<'a, 'T, 'S> = Parser.map Some parser
+let inline toParser (MaybeParser parser): Parser<'a option, 'T, 'S> = parser
 
 //  =========================
 //       Basic Parsers
