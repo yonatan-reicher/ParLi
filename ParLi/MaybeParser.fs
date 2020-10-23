@@ -3,9 +3,15 @@
 open ParLi
 
 
+/// run the parser on the input and state
+let inline parseWith (Parser parseFunction) input state: 'a * 'T * 'S =
+    parseFunction (input, state)
+
 let parser (func: 'input * 'state -> 'a option * 'input * 'state)
            : MaybeParser<'a, 'input, 'state> =
     func
+    
+let inline ofParser parser: MaybeParser<'a, 'T, 'S> = Parser.map Some parser
 
 //  =========================
 //       Basic Parsers
@@ -15,8 +21,6 @@ let inline ret returnValue: MaybeParser<'a, 'T, 'S> =
     Parser.ret (Some returnValue)
 
 let inline fail<'a, 'T, 'S> : MaybeParser<'a, 'T, 'S> = Parser.ret None
-
-let inline ofParser parser: MaybeParser<'a, 'T, 'S> = Parser.map Some parser
 
 //  =========================
 //       The Bind Parser
@@ -86,6 +90,30 @@ let inline orElse (MaybeParser firstParse)
         | None, _, newState -> secondParse (input, newState)
         | result -> result
 
-let (<|>) = orElse
+let inline (<|>) x y = orElse x y
+
+let inline opt (MaybeParser parser) = ofParser parser
 
 let inline choice x = List.reduce orElse x
+
+/// Runs the parser many times and returns the input and state and a list of outputs
+/// gathered up until the parser failed.
+/// many p is a Parser and not a MaybeParser because it always succeeds
+let inline many (MaybeParser p): Parser<'a list, 'T, 'S> =
+    Parser.parser(fun (input, state) ->
+        let mutable outputListReversed = []
+        let mutable input = input
+        let mutable state = state
+        let mutable result = None
+
+        while Option.isNone result do
+            match parseWith p input state with
+            | None, _, _ ->
+                //  stop
+                result <- Some (List.rev outputListReversed)
+            | Some output, nextInput, nextState ->
+                //  continue!
+                outputListReversed <- output :: outputListReversed
+                input <- nextInput
+                state <- nextState
+        Option.get result, input, state)

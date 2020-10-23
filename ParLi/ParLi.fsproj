@@ -8,6 +8,11 @@
     <Compile Include="ParLi.fs" />
     <Compile Include="Parser.fs" />
     <Compile Include="MaybeParser.fs" />
+    <Compile Include="Linear\Linear.fs" />
+    <Compile Include="Linear\Position.fs" />
+    <Compile Include="Linear\Range.fs" />
+    <Compile Include="Linear\Input.fs" />
+    <Compile Include="Linear\Text\Text.fs" />
   </ItemGroup>
 
 </Project>
