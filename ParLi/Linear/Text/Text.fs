@@ -11,7 +11,7 @@ let string (str: string): MaybeParser<string, string Input, 'S> =
         let (Input (inputString, Position i)) = input
         let len = str.Length
 
-        if inputString.[i..(i + len)] = str then
+        if inputString.[i..(i + len - 1)] = str then
             Some str, Input.advance len input, state
         else
             None, input, state)
