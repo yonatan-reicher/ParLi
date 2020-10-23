@@ -6,8 +6,11 @@ open System.IO
 open ParLi
 open ParLi.Linear
 
-let string (str: string): MaybeParser<string, string Input, 'S> =
-    MaybeParser.parser (fun (input, state) ->
+open MaybeParser
+
+
+let inline string (str: string): MaybeParser<string, string Input, 'S> =
+    parser (fun (input, state) ->
         let (Input (inputString, Position i)) = input
         let len = str.Length
 
@@ -15,3 +18,23 @@ let string (str: string): MaybeParser<string, string Input, 'S> =
             Some str, Input.advance len input, state
         else
             None, input, state)
+
+let inline char (ch: char): MaybeParser<char, string Input, 'S> =
+    parser (fun (input, state) ->
+        let (Input (inputString, Position i)) = input
+
+        if inputString.[i] = ch then
+            Some ch, Input.advance 1 input, state
+        else
+            None, input, state)
+
+
+let inline stringReturn str value = 
+    string str >>. ret value
+
+let inline charReturn ch value =
+    char ch >>. ret value
+
+let inline stringSkip str = stringReturn str ()
+
+let inline charSkip str = stringReturn str ()
