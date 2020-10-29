@@ -1,5 +1,5 @@
 ﻿[<AutoOpen>]
-module ParLi.Main
+module ParLi.Parsers.Main
 
 
 /// A parser is a function that takes a context ('input * 'state) and returns an

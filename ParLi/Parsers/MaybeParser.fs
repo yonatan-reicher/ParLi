@@ -1,27 +1,34 @@
-﻿module ParLi.MaybeParser
-
-open ParLi
+﻿module ParLi.Parsers.MaybeParser
 
 
 /// run the parser on the input and state
 let inline parseWith (Parser parseFunction) input state: 'a * 'T * 'S =
     parseFunction (input, state)
 
-let parser (func: 'input * 'state -> 'a option * 'input * 'state)
-           : MaybeParser<'a, 'input, 'state> =
+
+//  Nothing actually happens in these next functions because the
+//  parser is the function this is purely for typing reasons
+
+// make a parser out of a function
+let inline parser (func: 'input * 'state -> 'a option * 'input * 'state)
+                  : MaybeParser<'a, 'input, 'state> =
     func
 
-let inline ofParser parser: MaybeParser<'a, 'T, 'S> = Parser.map Some parser
+let inline ofParser (Parser parser): MaybeParser<'a, 'T, 'S> = parser
 let inline toParser (MaybeParser parser): Parser<'a option, 'T, 'S> = parser
 
 //  =========================
 //       Basic Parsers
 //  =========================
 
+/// Always returns the value
 let inline ret returnValue: MaybeParser<'a, 'T, 'S> =
     Parser.ret (Some returnValue)
 
+/// Always fails
 let inline fail<'a, 'T, 'S> : MaybeParser<'a, 'T, 'S> = Parser.ret None
+
+let inline some parser: MaybeParser<'a, 'T, 'S> = Parser.map Some parser |> ofParser
 
 //  =========================
 //       The Bind Parser
@@ -30,17 +37,12 @@ let inline fail<'a, 'T, 'S> : MaybeParser<'a, 'T, 'S> = Parser.ret None
 let inline bind (binder: 'a -> MaybeParser<'b, 'T, 'S>) (MaybeParser parse) =
     Parser.bind (Option.map binder >> Option.defaultValue fail) parse
 
-let inline (>>=) (p: MaybeParser<'a, 'T, 'S>) f: MaybeParser<'b, 'T, 'S> =
-    bind f p
-
 //  =========================
 //       The Map Parser
 //  =========================
 
 let inline map (mapping: 'a -> 'b) (MaybeParser parse): MaybeParser<'b, 'T, 'S> =
     Parser.map (Option.map mapping) parse
-
-let inline (|>>) (p: MaybeParser<'a, 'T, 'S>) (f: 'a -> 'b) = map f p
 
 //  =========================
 //       The Then Parser
@@ -49,35 +51,12 @@ let inline (|>>) (p: MaybeParser<'a, 'T, 'S>) (f: 'a -> 'b) = map f p
 let inline andThen (MaybeParser firstParse)
                    (MaybeParser secondParse)
                    : MaybeParser<'a * 'b, 'T, 'S> =
-    firstParse >>= fun a -> secondParse |>> fun b -> a, b
+    firstParse
+    |> bind (fun a -> secondParse |> map (fun b -> a, b))
 
-let inline andThenFst x y = andThen x y |>> fst
+let inline andThenFst x y = andThen x y |> map fst
 
-let inline andThenSnd x y = andThen x y |>> snd
-
-let (.>>.) = andThen
-
-let (.>>) = andThenFst
-
-let (>>.) = andThenSnd
-
-let sequential x =
-    let consParserResults (x: MaybeParser<'a list, 'T, 'S>)
-                          (y: MaybeParser<'a, 'T, 'S>)
-                          =
-        map (fun (xn, x0) -> x0 :: xn) (andThen x y)
-
-    //  Append the results in opposite order
-    List.fold consParserResults (ret []) x
-    //  And reverse it
-    |>> List.rev
-
-let inline tuple3 x y z: MaybeParser<'x * 'y * 'z, 'T, 'S> =
-    x .>>. y .>>. z |>> fun ((x, y), z) -> x, y, z
-
-let inline tuple4 x y z w: MaybeParser<'x * 'y * 'z * 'w, 'T, 'S> =
-    x .>>. y .>>. z .>>. w
-    |>> fun (((x, y), z), w) -> x, y, z, w
+let inline andThenSnd x y = andThen x y |> map snd
 
 //  =========================
 //       The Or Parser
@@ -99,11 +78,7 @@ let inline defaultWith (MaybeParser parse)
         | Some result, input, state -> result, input, state
         | None, _, newState -> Parser.parseWith defaultParse input newState)
 
-let inline (<|>) x y = orElse x y
-
-let inline opt (MaybeParser parser) = ofParser parser
-
-let inline choice x = List.reduce orElse x
+//let inline opt (MaybeParser parser) = ofParser parser
 
 /// Runs the parser many times and returns the input and state and a list of outputs
 /// gathered up until the parser failed.
@@ -129,8 +104,17 @@ let inline many (MaybeParser p): Parser<'a list, 'T, 'S> =
         Option.get result, input, state)
 
 //  =========================
-//       The Or Parser
+//       The Choose Parser
 //  =========================
 
 let inline choose (choosing: 'a -> 'b option) parser: MaybeParser<'b, 'T, 'S> =
-    parser >>= (choosing >> Parser.ret)
+    bind (choosing >> Parser.ret) parser
+
+let inline onlyChoose (choosing: 'a -> 'b option) parser: MaybeParser<'b, 'T, 'S> =
+    Parser.bind (choosing >> Parser.ret) parser
+
+let inline where (predicate: 'a -> bool) parser: MaybeParser<'a, 'T, 'S> =
+    choose (fun x -> if predicate x then Some x else None) parser
+
+let inline onlyWhere (predicate: 'a -> bool) parser: MaybeParser<'a, 'T, 'S> =
+    onlyChoose (fun x -> if predicate x then Some x else None) parser

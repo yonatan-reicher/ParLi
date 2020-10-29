@@ -5,14 +5,21 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="ParLi.fs" />
-    <Compile Include="Parser.fs" />
-    <Compile Include="MaybeParser.fs" />
+    <Compile Include="Parsers\Main.fs" />
+    <Compile Include="Parsers\Parser.fs" />
+    <Compile Include="Parsers\MaybeParser.fs" />
+    <Compile Include="Parsers\Operators.fs" />
     <Compile Include="Linear\Linear.fs" />
     <Compile Include="Linear\Position.fs" />
     <Compile Include="Linear\Range.fs" />
     <Compile Include="Linear\Input.fs" />
-    <Compile Include="Linear\Text\Text.fs" />
+    <Compile Include="Linear\Parsers.fs" />
+    <Compile Include="Text\Main.fs" />
+    <Compile Include="Text\Parsers.fs" />
+    <Compile Include="Arrays\Main.fs" />
+    <Compile Include="Arrays\Parsers.fs" />
+    <Compile Include="Trees\Main.fs" />
+    <Compile Include="Trees\Parsers.fs" />
   </ItemGroup>
 
 </Project>
