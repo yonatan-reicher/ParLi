@@ -56,3 +56,6 @@ let inline spacesln<'S> : Parser<string, Input, 'S> =
 
 let inline spaces<'S> : Parser<string, Input, 'S> =
     charsTake (fun c -> Char.IsWhiteSpace c && c <> '\n' && c <> '\r')
+
+let inline surroundedSpaces parser = spaces >>. parser .>> spaces
+let inline surroundedSpacesln parser = spacesln >>. parser .>> spacesln

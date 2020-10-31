@@ -3,30 +3,41 @@ module Linear.Text.Tests
 open System
 open Xunit
 
-open ParLi.Parser
+open ParLi.Parsers
 open ParLi.Linear
-open ParLi.Linear.Text
+open ParLi.Text
 
-open MaybeParser
 
 let text = @"let x = 2 + 5 * 3 in
 x * x;"
 
-let identifier: Parser<_,_,unit> = charsTake (Char.IsWhiteSpace >> not)
-let whitespace = spaces <|> newline
+let identifier: MaybeParser<_, _, unit> = charsTake (Char.IsWhiteSpace >> not) |> MaybeParser.onlyWhere (String.IsNullOrEmpty >> not)
 
-let ``let`` = stringSkip "let" >>. 
+type AST =
+    | Const of int
+    | Var of string
+    | Add of AST * AST
+    | Mul of AST * AST
+    | Let of string * AST * AST
 
-let p1 =
-    choice [
-        stringSkip "let" >>. spaces >>. 
-    ]
+let expri, (expr: MaybeParser<AST, Input, unit>) = Parser.ref ()
+
+let ``let``: MaybeParser<AST, Input, unit> =
+    let beforeEq: MaybeParser<string, Input, unit> = stringSkip "let" >>? surroundedSpaces identifier
+    let beforeIn = char '=' >>. surroundedSpaces expr
+    let afterIn = string "in" >>. spacesln >>. expr
+    beforeEq .>>. beforeIn .>>. afterIn |>> failwithf ""
+
+do expri (choice [ ``let`` ])
 
 [<Fact>]
 let ``My test`` () =
-    let output, input, state = Parser.parseWith p1 text ()
-    
-    Assert.Equal(Some "hhh", output)
-    Assert.Equal(Input.advance 3 text, input)
+    let output, input, state = Parser.parseWith expr (Input.ofValue text) ()
+
+    Assert.Equal
+        (Some
+         <| Let("x", Add(Const 2, Mul(Const 5, Const 3)), Mul(Var "x", Var "x")),
+         output)
+
+    Assert.True(Input.eof input)
     Assert.Equal(state, ())
-    

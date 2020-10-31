@@ -12,6 +12,10 @@ let parser (func: 'input * 'state -> 'a * 'input * 'state)
     //  this is purely for typing reasons
     func
 
+let ref (): (_ -> _) * Parser<'a, 'T, 'S> = 
+    let mutable parse = None
+    (fun x -> parse <- Some x), parser (fun (input, state) -> parseWith parse.Value input state)
+
 //  =========================
 //       Basic Parsers
 //  =========================

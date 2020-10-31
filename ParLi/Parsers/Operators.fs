@@ -15,8 +15,10 @@ module BasicOperators =
         static member Bind (x, f) = Parser.bind f x
         static member Bind (x, f) = MaybeParser.bind f x
 
-        static member Then (x, y) = Parser.andThen x y
+        //static member Then (x, y) = Parser.andThen x y
         static member Then (x, y) = MaybeParser.andThen x y
+        static member Then (x, y) = MaybeParser.andThen (MaybeParser.some x) y
+        static member Then (x, y) = MaybeParser.andThen x (MaybeParser.some y)
 
         static member Or (x, y) = MaybeParser.orElse x y
         static member Or (x, y) = MaybeParser.defaultWith x y
@@ -61,17 +63,39 @@ module BasicOperators =
     /// return the output of parser1 or parser2
     let inline (<|>) (x: '``Parser<'a, 'T, 'S>``) (y: '``Parser<'b, 'T, 'S>``): '``Parser<'c, 'T, 'S>`` = orElse x y
 
-
+    (*
     /// return the output of parsing with parser1 and then parser2
     let inline andThen (parser1: 'P1) (parser2: 'P2): 'Q = 
         let inline call (_helper: ^Operators, x: ^A, y: ^B, _output: ^C) =
-            ( (^Operators or ^A or ^B or ^C) : (static member Then: _ * _ -> _) x, y)
+            ( (^Operators or ^A) : (static member Then: _ * _ -> _) x, y)
         call (Unchecked.defaultof<Operators>, parser1, parser2, Unchecked.defaultof<'Q>)
 
     /// return the output of parsing with parser1 and then parser2
     let inline (.>>.) (x: '``Parser<'a, 'T, 'S>``) (y: '``Parser<'b, 'T, 'S>``): '``Parser<'a * 'b, 'T, 'S>`` = andThen x y
     let inline (.>>) (x: '``Parser<'a, 'T, 'S>``) (y: '``Parser<'b, 'T, 'S>``): '``Parser<'a * 'b, 'T, 'S>`` = andThen x y |>> fst
     let inline (>>.) (x: '``Parser<'a, 'T, 'S>``) (y: '``Parser<'b, 'T, 'S>``): '``Parser<'a * 'b, 'T, 'S>`` = andThen x y |>> snd
+    *)
+
+    let inline (.>>.) x y: Parser<'a * 'b, 'T, 'S> = 
+        Parser.andThen x y
+
+    let inline (.>>) x y: Parser<'a, 'T, 'S> = 
+        Parser.andThenFst x y
+
+    let inline (>>.) x y: Parser<'b, 'T, 'S> = 
+        Parser.andThenSnd x y
+
+    let inline (?>>?) (x: '``Parser<'a, 'T, 'S>``) (y: '``Parser<'b, 'T, 'S>``): MaybeParser<'a * 'b, 'T, 'S> = 
+        let inline call (_operators: ^M, p1: ^A, p2: ^B) =
+            ((^M or ^A or ^B) : (static member Then: _ * _ -> _) p1, p2)
+
+        call (Unchecked.defaultof<Operators>, x, y)
+
+    let inline (?>>) (x: '``Parser<'a, 'T, 'S>``) (y: '``Parser<'b, 'T, 'S>``): MaybeParser<'a, 'T, 'S> = 
+        x ?>>? y |>> fst
+
+    let inline (>>?) (x: '``Parser<'a, 'T, 'S>``) (y: '``Parser<'b, 'T, 'S>``): MaybeParser<'b, 'T, 'S> = 
+        x ?>>? y |>> snd
 
 
     /// return the output of applying the parser on the input and state
@@ -84,18 +108,21 @@ module BasicOperators =
 [<AutoOpen>]
 module CompoundOperators = 
 
+    //  TODO: fix this
+    (*  
     let inline sequential (parsers: '``Parser<'a, 'T, 'S>`` list): '``Parser<'a list, 'T, 'S>`` = 
         let firstParser, parsers =
             match parsers with
             | [] -> failwithf "sequential cannot be called with []"
             | h :: t -> h, t        
         
-        let mutable ret = map List.singleton firstParser
+        let mutable ret: '``Parser<'a list, 'T, 'S>`` = map List.singleton firstParser
 
         for parser in parsers do
             ret <- ret .>>. parser |>> fun (prev, p) -> p :: prev
 
         map List.rev ret
+    *)
 
 
     let inline choice parsers = 
