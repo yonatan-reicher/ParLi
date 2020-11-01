@@ -75,7 +75,7 @@ let inline orElse firstParser secondParser: MaybeParser<'a, 'T, 'S> =
         | None, _, newState -> parseWith secondParser input newState
         | result -> result)
 
-let inline defaultWith parser defaultParser: Parser<'a, 'T, 'S> =
+let inline defaultWith defaultParser parser: Parser<'a, 'T, 'S> =
     Parser.parser (fun (input, state) ->
         match parseWith parser input state with
         | Some result, input, state -> result, input, state

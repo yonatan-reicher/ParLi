@@ -31,7 +31,7 @@ module BasicOperators =
         static member ThenSnd (x, y) = MaybeParser.andThenSnd x (MaybeParser.some y)
 
         static member Or (x, y) = MaybeParser.orElse x y
-        static member Or (x, y) = MaybeParser.defaultWith x y
+        static member Or (x, y) = MaybeParser.defaultWith y x
 
         static member Parse (x, input, state) = Parser.parseWith x input state
         static member Parse (x, input, state) = MaybeParser.parseWith x input state
