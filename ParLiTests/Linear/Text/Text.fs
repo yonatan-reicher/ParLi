@@ -8,11 +8,6 @@ open ParLi.Linear
 open ParLi.Text
 
 
-let text = @"let x = 2 + 5 * 3 in
-x * x;"
-
-let identifier: MaybeParser<_, _, unit> = charsTake (Char.IsWhiteSpace >> not) |> MaybeParser.onlyWhere (String.IsNullOrEmpty >> not)
-
 type AST =
     | Const of int
     | Var of string
@@ -20,24 +15,66 @@ type AST =
     | Mul of AST * AST
     | Let of string * AST * AST
 
-let expri, (expr: MaybeParser<AST, Input, unit>) = Parser.ref ()
+let text = @"let x = 2 + 5 * 3 in
+x * x"
 
-let ``let``: MaybeParser<AST, Input, unit> =
-    let beforeEq: MaybeParser<string, Input, unit> = stringSkip "let" >>? surroundedSpaces identifier
-    let beforeIn = char '=' >>. surroundedSpaces expr
-    let afterIn = string "in" >>. spacesln >>. expr
-    beforeEq .>>. beforeIn .>>. afterIn |>> failwithf ""
+let failWith message = MaybeParser.some Parser.input >>= fun input -> Parser.updateState ((@) [message, Input.position input]) >>. MaybeParser.fail
 
-do expri (choice [ ``let`` ])
+let expect string =
+    stringSkip string
+    <|> failWith ("Expected " + string)
+
+let identifier: MaybeParser<_, _, _> =
+    choice [ charsTake (Char.IsWhiteSpace >> not)
+             |> MaybeParser.onlyWhere (String.IsNullOrEmpty >> not)
+
+             failWith "expected identifier" ]
+
+let number: MaybeParser<_, _, _> =
+    choice [ charsTake Char.IsDigit
+             |> MaybeParser.onlyWhere (String.IsNullOrEmpty >> not)
+             |>> int
+
+             failWith "expected number" ]
+
+let expri, (expr: MaybeParser<AST, Input, _>) = MaybeParser.ref ()
+
+let atom = 
+    choice [
+        number |>> Const
+        identifier |>> Var
+    ] <|> failWith "expected atom"
+
+let term': MaybeParser<AST, _, _> =
+    atom .>>. MaybeParser.toParser (spacesln >>. expect "*" >>. spacesln >>. atom)
+    |>> function a, Some b -> Mul (a, b) | a, None -> a
+
+let term: MaybeParser<AST, _, _> = 
+    term' .>>. MaybeParser.toParser (spacesln >>. expect "+" >>. spacesln >>. term')
+    |>> function a, Some b -> Add (a, b) | a, None -> a
+
+let ``let``: MaybeParser<AST, Input, _> =
+    (expect "let" >>. spaces >>. identifier
+     .>> spaces
+     .>> expect "="
+     .>> spaces
+     .>>. expr
+     .>> spaces
+     .>> expect "in"
+     .>> spacesln
+     .>>. expr)
+    |>> fun ((a, b), c) -> Let(a, b, c)
+
+do expri (choice [ ``let``; term ])
 
 [<Fact>]
 let ``My test`` () =
-    let output, input, state = Parser.parseWith expr (Input.ofValue text) ()
-
+    let output, input, state =
+        MaybeParser.parseWith expr (Input.ofValue text) []
+            
+    //Assert.Equal<list<_>>([], state)
     Assert.Equal
         (Some
          <| Let("x", Add(Const 2, Mul(Const 5, Const 3)), Mul(Var "x", Var "x")),
          output)
-
     Assert.True(Input.eof input)
-    Assert.Equal(state, ())

@@ -6,10 +6,10 @@ open ParLi.Parsers
 open ParLi.Linear
 
 let inline char (ch: char): MaybeParser<char, Input, 'S> =
-    pop |> MaybeParser.where ((=) ch)
+    pop () |> MaybeParser.where ((=) ch)
 
 let inline string (str: string): MaybeParser<string, Input, 'S> =
-    MaybeParser.parser (fun (input, state) ->
+    MaybeParser.maybeParser (fun (input, state) ->
         let (Input (inputString, Position i)) = input
         let len = str.Length
 
@@ -28,7 +28,7 @@ let inline charSkip str: MaybeParser<unit, Input, 'S> = stringReturn str ()
 
 
 let inline charsTake (predicate: char -> bool): Parser<string, Input, 'S> =
-    MaybeParser.many (pop |> MaybeParser.where predicate) |>> String.Concat
+    MaybeParser.many (pop () |> MaybeParser.where predicate) |>> String.Concat
     //Parser.parser (fun (input, state) ->
     //    let mutable input = input
     //    let mutable charsReversed = Some []
@@ -57,5 +57,5 @@ let inline spacesln<'S> : Parser<string, Input, 'S> =
 let inline spaces<'S> : Parser<string, Input, 'S> =
     charsTake (fun c -> Char.IsWhiteSpace c && c <> '\n' && c <> '\r')
 
-let inline surroundedSpaces parser = spaces >>. parser .>> spaces
-let inline surroundedSpacesln parser = spacesln >>. parser .>> spacesln
+//let inline surroundedSpaces parser = spaces >>. parser //.>> spaces
+//let inline surroundedSpacesln parser = spacesln >>. parser .>> spacesln

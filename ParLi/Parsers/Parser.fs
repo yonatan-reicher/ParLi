@@ -6,11 +6,8 @@ let inline parseWith (Parser parseFunction) input state: 'a * 'T * 'S =
     parseFunction (input, state)
 
 /// Make a parser out of the function
-let parser (func: 'input * 'state -> 'a * 'input * 'state)
-           : Parser<'a, 'input, 'state> =
-    //  Nothing actually happens because the parser is the function,
-    //  this is purely for typing reasons
-    func
+let parser func: Parser<'a, 'input, 'state> =
+    Parser func
 
 let ref (): (_ -> _) * Parser<'a, 'T, 'S> = 
     let mutable parse = None

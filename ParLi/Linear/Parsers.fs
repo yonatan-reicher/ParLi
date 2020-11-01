@@ -13,13 +13,15 @@ let inline eof< ^T, 'S when ^T: (member Length: int)> : MaybeParser<unit, ^T Inp
 
 /// get: MaybeParser<'a, 'T Input, 'S> returns the current element of 'T
 /// 'T must be one of: string, 'a list, 'a array
-let inline get (input, state): 'a option * 'T Input * 'S =
-    Input.tryGet input, input, state
+let inline get (): MaybeParser<'a, 'T Input, 'S> =
+    MaybeParser.maybeParser (fun (input, state) ->
+        Input.tryGet input, input, state)
 
 /// pop: MaybeParser<'a, 'T Input, 'S> returns the current element of 'T and
 /// advances the position by 1 if it succeeded
 /// 'T must be one of: string, 'a list, 'a array
-let inline pop (input, state): 'a option * 'T Input * 'S =
-    let output = Input.tryGet input
-    let nextInput = (if output.IsSome then Input.advance 1 else id) input
-    output, nextInput, state
+let inline pop (): MaybeParser<'a, 'T Input, 'S> =
+    MaybeParser.maybeParser (fun (input, state) ->
+        let output = Input.tryGet input
+        let nextInput = (if output.IsSome then Input.advance 1 else id) input
+        output, nextInput, state)
