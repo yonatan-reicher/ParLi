@@ -48,22 +48,6 @@ let inline andThenFst x y = andThen x y |> map fst
 
 let inline andThenSnd x y = andThen x y |> map snd
 
-//let sequential x =
-//    let consParserResults (x: Parser<'a list, 'T, 'S>) (y: Parser<'a, 'T, 'S>) =
-//        map (fun (xn, x0) -> x0 :: xn) (andThen x y)
-
-//    //  Append the results in opposite order
-//    List.fold consParserResults (ret []) x
-//    //  And reverse it
-//    |>> List.rev
-
-//let inline tuple3 x y z: Parser<'x * 'y * 'z, 'T, 'S> =
-//    x .>>. y .>>. z |>> fun ((x, y), z) -> x, y, z
-
-//let inline tuple4 x y z w: Parser<'x * 'y * 'z * 'w, 'T, 'S> =
-//    x .>>. y .>>. z .>>. w
-//    |>> fun (((x, y), z), w) -> x, y, z, w
-
 //  =========================
 //       The Bind Parser
 //  =========================
