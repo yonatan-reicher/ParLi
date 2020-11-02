@@ -96,28 +96,6 @@ module BasicOperators =
     let inline (.>>) (x: '``Parser<'a, 'T, 'S>``) (y: '``Parser<'b, 'T, 'S>``): '``Parser<'a * 'b, 'T, 'S>`` = andThenFst x y
     let inline (>>.) (x: '``Parser<'a, 'T, 'S>``) (y: '``Parser<'b, 'T, 'S>``): '``Parser<'a * 'b, 'T, 'S>`` = andThenSnd x y
 
-    //let inline (.>>.) x y: Parser<'a * 'b, 'T, 'S> = 
-    //    Parser.andThen x y
-
-    //let inline (.>>) x y: Parser<'a, 'T, 'S> = 
-    //    Parser.andThenFst x y
-
-    //let inline (>>.) x y: Parser<'b, 'T, 'S> = 
-    //    Parser.andThenSnd x y
-
-    //let inline (?>>?) (x: '``Parser<'a, 'T, 'S>``) (y: '``Parser<'b, 'T, 'S>``): MaybeParser<'a * 'b, 'T, 'S> = 
-    //    let inline call (_operators: ^M, p1: ^A, p2: ^B) =
-    //        ((^M or ^A or ^B) : (static member Then: _ * _ -> _) p1, p2)
-
-    //    call (Unchecked.defaultof<Operators>, x, y)
-
-    //let inline (?>>) (x: '``Parser<'a, 'T, 'S>``) (y: '``Parser<'b, 'T, 'S>``): MaybeParser<'a, 'T, 'S> = 
-    //    x ?>>? y |>> fst
-
-    //let inline (>>?) (x: '``Parser<'a, 'T, 'S>``) (y: '``Parser<'b, 'T, 'S>``): MaybeParser<'b, 'T, 'S> = 
-    //    x ?>>? y |>> snd
-
-
     /// return the output of applying the parser on the input and state
     let inline parseWith (parser: '``Parser<'a, 'T, 'S>``) (input: 'T) (state: 'S) = 
         let inline call (_helper: ^Operators, parser: ^A) =
