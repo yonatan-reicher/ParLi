@@ -1,6 +1,8 @@
 ﻿[<AutoOpen>]
 module ParLi.Parsers.Operators
 
+open ParLi.Parsers
+
 [<AutoOpen>]
 module BasicOperators =
     /// Contains overloads for all parser types (currently only 2 but may change)
@@ -13,6 +15,7 @@ module BasicOperators =
         static member Map (x, f) = MaybeParser.map f x
 
         static member Bind (x, f) = Parser.bind f x
+        static member Bind (x, f) = Parser.bind (f >> MaybeParser.toParser) x |> MaybeParser.ofParser
         static member Bind (x, f) = MaybeParser.bind f x
 
         static member Then (x, y) = Parser.andThen x y
@@ -132,3 +135,6 @@ module CompoundOperators =
             ret <- MaybeParser.orElse ret parser
         
         ret
+
+    let inline discardState (parser: '``Parser<'a,'T,'S>``): '``Parser<'a,'T,'S>`` =
+        Parser.state >>= fun state -> parser .>> Parser.updateState (fun _ -> state)
