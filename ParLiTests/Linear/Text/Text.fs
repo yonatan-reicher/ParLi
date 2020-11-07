@@ -41,16 +41,16 @@ let expri, (expr: MaybeParser<AST, Input, _>) = MaybeParser.ref ()
 
 let atom = 
     choice [
-        number |>> Const
-        identifier |>> Var
+        discardState number |>> Const
+        discardState identifier |>> Var
     ] <|> failWith "expected atom"
 
 let term': MaybeParser<AST, _, _> =
-    atom .>>. MaybeParser.toParser (spacesln >>. expect "*" >>. spacesln >>. atom)
+    atom .>>. onlyIf (spacesln >>. stringSkip "*" .>> spacesln) atom
     |>> function a, Some b -> Mul (a, b) | a, None -> a
 
 let term: MaybeParser<AST, _, _> = 
-    term' .>>. MaybeParser.toParser (spacesln >>. expect "+" >>. spacesln >>. term')
+    term' .>>. onlyIf (spacesln >>. stringSkip "+" .>> spacesln) term'
     |>> function a, Some b -> Add (a, b) | a, None -> a
 
 let ``let``: MaybeParser<AST, Input, _> =
@@ -72,7 +72,7 @@ let ``My test`` () =
     let output, input, state =
         MaybeParser.parseWith expr (Input.ofValue text) []
             
-    //Assert.Equal<list<_>>([], state)
+    Assert.Equal<list<_>>([], state)
     Assert.Equal
         (Some
          <| Let("x", Add(Const 2, Mul(Const 5, Const 3)), Mul(Var "x", Var "x")),

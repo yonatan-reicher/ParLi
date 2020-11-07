@@ -72,14 +72,14 @@ let inline andThenSnd x y = andThen x y |> map snd
 let inline orElse firstParser secondParser: MaybeParser<'a, 'T, 'S> =
     maybeParser (fun (input, state) ->
         match parseWith firstParser input state with
-        | None, _, newState -> parseWith secondParser input newState
+        | None, _, newState when newState = state -> parseWith secondParser input state
         | result -> result)
 
 let inline defaultWith defaultParser parser: Parser<'a, 'T, 'S> =
     Parser.parser (fun (input, state) ->
         match parseWith parser input state with
         | Some result, input, state -> result, input, state
-        | None, _, newState -> Parser.parseWith defaultParser input newState)
+        | None, _, newState -> Parser.parseWith defaultParser input state)
 
 //let inline opt (MaybeParser parser) = ofParser parser
 

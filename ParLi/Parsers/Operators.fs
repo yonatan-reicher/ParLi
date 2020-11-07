@@ -136,5 +136,10 @@ module CompoundOperators =
         
         ret
 
-    let inline discardState (parser: '``Parser<'a,'T,'S>``): '``Parser<'a,'T,'S>`` =
+    let inline discardState (parser: '``Parser<'a,'T,'S>``): '``Parser<'a,'T,'S>2`` =
         Parser.state >>= fun state -> parser .>> Parser.updateState (fun _ -> state)
+
+    let inline onlyIf (condition: MaybeParser<unit, 'T, 'S>) (parser: MaybeParser<'a, 'T, 'S>): MaybeParser<'a option, 'T, 'S> =
+        MaybeParser.toParser condition >>= function 
+            | Some () -> parser |>> Some
+            | None -> ret None
