@@ -75,3 +75,9 @@ module CompoundOperators =
 
     let inline opt (p: Parser<'a, 'T, 'S>) = 
         p |>> Some <|> ret None
+
+    let inline tuple3 p1 p2 p3 = 
+        p1 .>>. p2 .>>. p3 |>> fun ((a, b), c) -> a, b, c
+
+    let inline tuple4 p1 p2 p3 p4 = 
+        p1 .>>. p2 .>>. p3 .>>. p4 |>> fun (((a, b), c), d) -> a, b, c, d
