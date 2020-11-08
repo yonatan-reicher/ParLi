@@ -38,7 +38,7 @@ let inline charReturn ch value: Parser<'a, Input, 'S> = char ch >>. ret value
 
 let inline stringSkip str: Parser<unit, Input, 'S> = stringReturn str ()
 
-let inline charSkip str: Parser<unit, Input, 'S> = stringReturn str ()
+let inline charSkip ch: Parser<unit, Input, 'S> = charReturn ch ()
 
 
 let inline charsTake (predicate: char -> bool): Parser<string, Input, 'S> =
