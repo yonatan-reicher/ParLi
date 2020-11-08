@@ -20,3 +20,7 @@ let inline get (): Parser<'a, 'T Input, 'S> =
 /// 'T must be one of: string, 'a list, 'a array
 let inline pop (): Parser<'a, 'T Input, 'S> =
     get () .>> Parser.updateInput (Input.advance 1)
+
+/// Get the position of the input
+let inline position<'T, 'S> : Parser<Position, 'T Input, 'S> =
+    Parser.input |>> Input.position
