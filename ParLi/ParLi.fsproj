@@ -15,6 +15,7 @@
     <Compile Include="Linear\Input.fs" />
     <Compile Include="Linear\Parsers.fs" />
     <Compile Include="Text\Main.fs" />
+    <Compile Include="Text\Input.fs" />
     <Compile Include="Text\Parsers.fs" />
     <Compile Include="Arrays\Main.fs" />
     <Compile Include="Arrays\Parsers.fs" />

@@ -2,8 +2,11 @@
 module ParLi.Text.Parsers
 
 open System
+open System.Text.RegularExpressions
+
 open ParLi.Parsers
 open ParLi.Linear
+open ParLi.Parsers
 
 let inline char (ch: char): Parser<char, Input, 'S> =
     pop () |> Parser.where ((=) ch)
@@ -17,6 +20,17 @@ let inline string (str: string): Parser<string, Input, 'S> =
             ParseOk (str, Input.advance len input, state)
         else
             ParseError (false, state))
+
+let regex pattern: Parser<string, Input, 'S> = 
+    let regexObj = new Regex (pattern, RegexOptions.Compiled)
+
+    Parser.parser (fun (input, state) ->
+        let matchObj = regexObj.Match(Input.rest input)
+        if matchObj.Success then
+            let substr = matchObj.Value
+            ParseResult.ok (substr, Input.advance substr.Length input, state)
+        else 
+            ParseResult.fail (false, state))
 
 let inline stringReturn str value: Parser<'a, Input, 'S> = string str >>. ret value
 
