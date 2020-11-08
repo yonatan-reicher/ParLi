@@ -1,4 +1,4 @@
-﻿module ParLi.Parses.ParseResult
+﻿module ParLi.Parsers.ParseResult
 
 open ParLi.Parsers
 
