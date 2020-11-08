@@ -15,66 +15,86 @@ type AST =
     | Mul of AST * AST
     | Let of string * AST * AST
 
-let text = @"let x = 2 + 5 * 3 in
-x * x"
+let failWith (message: 'message) =
+    Parser.input
+    >>= fun input ->
+            Parser.updateState ((@) [ message, Input.position input ])
+            >>. Parser.failFatally
 
-let failWith message = MaybeParser.some Parser.input >>= fun input -> Parser.updateState ((@) [message, Input.position input]) >>. MaybeParser.fail
+let identifier =
+    charsTake (Char.IsWhiteSpace >> not)
+    |> Parser.where (String.IsNullOrEmpty >> not)
 
-let expect string =
-    stringSkip string
-    <|> failWith ("Expected " + string)
+let number =
+    charsTake Char.IsDigit
+    |> Parser.where (String.IsNullOrEmpty >> not)
+    |>> int
 
-let identifier: MaybeParser<_, _, _> =
-    choice [ charsTake (Char.IsWhiteSpace >> not)
-             |> MaybeParser.onlyWhere (String.IsNullOrEmpty >> not)
+let expri, (expr: Parser<AST, Input, _>) = Parser.ref ()
 
-             failWith "expected identifier" ]
+let atom =
+    choice [ number |>> Const
+             identifier |>> Var ]
 
-let number: MaybeParser<_, _, _> =
-    choice [ charsTake Char.IsDigit
-             |> MaybeParser.onlyWhere (String.IsNullOrEmpty >> not)
-             |>> int
+let term' =
+    atom
+    .>>. opt
+             (spacesln
+              >>. stringSkip "*"
+              >>. spacesln
+              >>. (atom <|> failWith "Expected an atom"))
+    |>> function
+    | a, Some b -> Mul(a, b)
+    | a, None -> a
 
-             failWith "expected number" ]
+let term =
+    term'
+    .>>. opt
+             (spacesln
+              >>. stringSkip "+"
+              >>. spacesln
+              >>. (term' <|> failWith "Expected an small term"))
+    |>> function
+    | a, Some b -> Add(a, b)
+    | a, None -> a
 
-let expri, (expr: MaybeParser<AST, Input, _>) = MaybeParser.ref ()
-
-let atom = 
-    choice [
-        discardState number |>> Const
-        discardState identifier |>> Var
-    ] <|> failWith "expected atom"
-
-let term': MaybeParser<AST, _, _> =
-    atom .>>. onlyIf (spacesln >>. stringSkip "*" .>> spacesln) atom
-    |>> function a, Some b -> Mul (a, b) | a, None -> a
-
-let term: MaybeParser<AST, _, _> = 
-    term' .>>. onlyIf (spacesln >>. stringSkip "+" .>> spacesln) term'
-    |>> function a, Some b -> Add (a, b) | a, None -> a
-
-let ``let``: MaybeParser<AST, Input, _> =
-    (expect "let" >>. spaces >>. identifier
+let ``let`` =
+    (stringSkip "let" >>. spaces >>. identifier
      .>> spaces
-     .>> expect "="
+     .>> (stringSkip "=" <|> failWith "Expected a = symbol")
      .>> spaces
-     .>>. expr
+     .>>. (expr <|> failWith "Expected an expression")
      .>> spaces
-     .>> expect "in"
+     .>> (stringSkip "in" <|> failWith "Expected an in keyword")
      .>> spacesln
-     .>>. expr)
+     .>>. (expr <|> failWith "Expected an expression"))
     |>> fun ((a, b), c) -> Let(a, b, c)
 
 do expri (choice [ ``let``; term ])
 
 [<Fact>]
 let ``My test`` () =
-    let output, input, state =
-        MaybeParser.parseWith expr (Input.ofValue text) []
-            
-    Assert.Equal<list<_>>([], state)
-    Assert.Equal
-        (Some
-         <| Let("x", Add(Const 2, Mul(Const 5, Const 3)), Mul(Var "x", Var "x")),
-         output)
-    Assert.True(Input.eof input)
+    let text = @"let x = 2 + 5 * 3 in
+x * x"
+
+    parseWith expr (Input.ofValue text) []
+    |> function
+    | ParseError (fatal, state) -> Assert.True(false, "result was not ParseOk")
+    | ParseOk (output, input, state) ->
+        Assert.Equal<list<_>>([], state)
+
+        Assert.Equal
+            (Let
+                ("x", Add(Const 2, Mul(Const 5, Const 3)), Mul(Var "x", Var "x")),
+             output)
+
+        Assert.True(Input.eof input)
+
+[<Fact>]
+let ``fails correctly`` () =
+    let text = @"let x = 2 + 6 * 9
+x * x"
+
+    let text = parseWith expr (Input.ofValue text) []
+
+    Assert.Equal(ParseError(true, ["Expected an in keyword", Position.position 17]), text)

@@ -6,8 +6,8 @@
 
   <ItemGroup>
     <Compile Include="Parsers\Main.fs" />
+    <Compile Include="Parsers\ParseResult.fs" />
     <Compile Include="Parsers\Parser.fs" />
-    <Compile Include="Parsers\MaybeParser.fs" />
     <Compile Include="Parsers\Operators.fs" />
     <Compile Include="Linear\Linear.fs" />
     <Compile Include="Linear\Position.fs" />

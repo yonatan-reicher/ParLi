@@ -5,30 +5,30 @@ open System
 open ParLi.Parsers
 open ParLi.Linear
 
-let inline char (ch: char): MaybeParser<char, Input, 'S> =
-    pop () |> MaybeParser.where ((=) ch)
+let inline char (ch: char): Parser<char, Input, 'S> =
+    pop () |> Parser.where ((=) ch)
 
-let inline string (str: string): MaybeParser<string, Input, 'S> =
-    MaybeParser.maybeParser (fun (input, state) ->
+let inline string (str: string): Parser<string, Input, 'S> =
+    Parser.parser (fun (input, state) ->
         let (Input (inputString, Position i)) = input
         let len = str.Length
 
         if inputString.[i..(i + len - 1)] = str then
-            Some str, Input.advance len input, state
+            ParseOk (str, Input.advance len input, state)
         else
-            None, input, state)
+            ParseError (false, state))
 
-let inline stringReturn str value: MaybeParser<'a, Input, 'S> = MaybeParser.andThenSnd (string str) (MaybeParser.ret value: MaybeParser<'a, Input, 'S>)
+let inline stringReturn str value: Parser<'a, Input, 'S> = string str >>. ret value
 
-let inline charReturn ch value: MaybeParser<'a, Input, 'S> = MaybeParser.andThenSnd (char ch) (MaybeParser.ret value: MaybeParser<'a, Input, 'S>)
+let inline charReturn ch value: Parser<'a, Input, 'S> = char ch >>. ret value
 
-let inline stringSkip str: MaybeParser<unit, Input, 'S> = stringReturn str ()
+let inline stringSkip str: Parser<unit, Input, 'S> = stringReturn str ()
 
-let inline charSkip str: MaybeParser<unit, Input, 'S> = stringReturn str ()
+let inline charSkip str: Parser<unit, Input, 'S> = stringReturn str ()
 
 
 let inline charsTake (predicate: char -> bool): Parser<string, Input, 'S> =
-    MaybeParser.many (pop () |> MaybeParser.where predicate) |>> String.Concat
+    many (pop () |> Parser.where predicate) |>> String.Concat
     //Parser.parser (fun (input, state) ->
     //    let mutable input = input
     //    let mutable charsReversed = Some []
@@ -46,7 +46,7 @@ let inline charsTake (predicate: char -> bool): Parser<string, Input, 'S> =
     //    System.String.Concat chars, input, state)
 
 
-let inline newline<'S> : MaybeParser<string, Input, 'S> =
+let inline newline<'S> : Parser<string, Input, 'S> =
     choice [ string "\r\n"
              string "\n"
              string "\r" ]
