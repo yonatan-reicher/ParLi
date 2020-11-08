@@ -3,8 +3,8 @@
 open ParLi.Parsers
 
 
-let ok = ParseOk
-let fail = ParseError
+let ok: _ -> ParseResult<'a, 'T, 'S> = ParseOk
+let fail: _ -> ParseResult<'a, 'T, 'S> = ParseError
 
 let toResult: ParseResult<'a, 'T, 'S> -> _ = function 
     | ParseOk (a, b, c) -> Ok (a, b, c)
